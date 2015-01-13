@@ -26,8 +26,7 @@ public class RobotPlayer {
         while (true) {
             try {
                 myself.go();
-                transferSupplies();
-            } catch (Exception e) {
+                } catch (Exception e) {
                 e.printStackTrace();
             }
         }
