@@ -3,6 +3,11 @@
 #  	TumultuousTribbles
 ### Battlecode 2015 Team \#365
 
+
+
+##Check here for alternate video streams
+![](http://www.twitch.tv/m4xmann)
+
 >> Yes those adorably voracious space rabbits are back from Iota Geminorum IV to wreck havoc on the battlefield! 
 It's time for Battlecode: here are this years look-up tables.
 
