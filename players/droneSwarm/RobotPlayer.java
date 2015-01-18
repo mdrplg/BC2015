@@ -108,6 +108,22 @@ public class RobotPlayer {
 
             rc.attackLocation(toAttack);
         }
+        public void transferSupplies() throws GameActionException {
+        	RobotInfo[] nearbyAllies = rc.senseNearbyRobots(rc.getLocation(),GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED,rc.getTeam());
+        	double lowestSupply = rc.getSupplyLevel();
+        	double transferAmount = 0;
+        	MapLocation suppliesToThisLocation = null;
+        	for(RobotInfo ri:nearbyAllies){
+        		if(ri.supplyLevel<lowestSupply){
+        			lowestSupply = ri.supplyLevel;
+        			transferAmount = (rc.getSupplyLevel()-ri.supplyLevel)/2;
+        			suppliesToThisLocation = ri.location;
+        		}
+        	}
+        	if(suppliesToThisLocation!=null){
+        		rc.transferSupplies((int)transferAmount, suppliesToThisLocation);
+        	}
+        }
 
         public void beginningOfTurn() {
             if (rc.senseEnemyHQLocation() != null) {
@@ -136,7 +152,7 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
             int numBeavers = rc.readBroadcast(2);
-
+            transferSupplies();
             if (rc.isCoreReady() && rc.getTeamOre() > 100 && numBeavers < 10) {
                 Direction newDir = getSpawnDirection(RobotType.BEAVER);
                 if (newDir != null) {
@@ -165,7 +181,8 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            if (rc.isCoreReady()) {
+        	transferSupplies();
+        	if (rc.isCoreReady()) {
                 if (rc.getTeamOre() < 500) {
                     //mine
                     if (rc.senseOre(rc.getLocation()) > 0) {
@@ -187,7 +204,7 @@ public class RobotPlayer {
                     }
                 }
             }
-
+            
             rc.yield();
         }
     }
@@ -198,7 +215,8 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            if (rc.isCoreReady() && rc.getTeamOre() > 200) {
+        	transferSupplies();
+        	if (rc.isCoreReady() && rc.getTeamOre() > 200) {
                 Direction newDir = getSpawnDirection(RobotType.DRONE);
                 if (newDir != null) {
                     rc.spawn(newDir, RobotType.DRONE);
@@ -216,7 +234,7 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
             RobotInfo[] enemies = getEnemiesInAttackingRange();
-
+            transferSupplies();
             if (enemies.length > 0) {
                 //attack!
                 if (rc.isWeaponReady()) {
