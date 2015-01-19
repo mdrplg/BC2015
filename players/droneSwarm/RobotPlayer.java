@@ -17,7 +17,13 @@ public class RobotPlayer {
             myself = new Drone(rc);
         } else if (rc.getType() == RobotType.TOWER) {
             myself = new Tower(rc);
-        } else {
+        }else if (rc.getType() == RobotType.MINERFACTORY) {
+            myself = new MinerFactory(rc);
+        }
+        else if (rc.getType() == RobotType.MINER) {
+            myself = new Miner(rc);
+        }
+        else {
             myself = new BaseBot(rc);
         }
 
@@ -197,11 +203,15 @@ public class RobotPlayer {
                     }
                 }
                 else {
-                    //build barracks
-                    Direction newDir = getBuildDirection(RobotType.HELIPAD);
-                    if (newDir != null) {
-                        rc.build(newDir, RobotType.HELIPAD);
-                    }
+                   if(Clock.getRoundNum()%100<50){
+                	   Direction newDir = getBuildDirection(RobotType.HELIPAD);
+                	   if (newDir != null) {
+                		   rc.build(newDir, RobotType.HELIPAD);
+                    }}else {
+                    	Direction newDir = getBuildDirection(RobotType.MINERFACTORY);
+                 	   if (newDir != null) {
+                 		   rc.build(newDir, RobotType.MINERFACTORY);
+                    }}
                 }
             }
             
@@ -216,10 +226,29 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
         	transferSupplies();
-        	if (rc.isCoreReady() && rc.getTeamOre() > 200) {
+        	if (rc.isCoreReady() && rc.getTeamOre() > 125) {
                 Direction newDir = getSpawnDirection(RobotType.DRONE);
                 if (newDir != null) {
                     rc.spawn(newDir, RobotType.DRONE);
+                }
+            }
+
+            rc.yield();
+        }
+    }
+    public static class MinerFactory extends BaseBot {
+        public MinerFactory(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+        	int numMiners = rc.readBroadcast(3);
+        	transferSupplies();
+        	if (rc.isCoreReady() && rc.getTeamOre() > 125 && numMiners < 10) {
+                Direction newDir = getSpawnDirection(RobotType.MINER);
+                if (newDir != null) {
+                    rc.spawn(newDir, RobotType.MINER);
+                    rc.broadcast(3, numMiners + 1);
                 }
             }
 
@@ -255,6 +284,48 @@ public class RobotPlayer {
             rc.yield();
         }
     }
+    public static class Miner extends BaseBot {
+        public Miner(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            RobotInfo[] enemies = getEnemiesInAttackingRange();
+            transferSupplies();
+            if (enemies.length > 0) {
+                //attack!
+                if (rc.isWeaponReady()) {
+                    attackLeastHealthEnemy(enemies);
+                }
+            }
+            else if (Clock.getRoundNum()>1300&&rc.isCoreReady()) {
+                int rallyX = rc.readBroadcast(0);
+                int rallyY = rc.readBroadcast(1);
+                MapLocation rallyPoint = new MapLocation(rallyX, rallyY);
+
+                Direction newDir = getMoveDir(rallyPoint);
+
+                if (newDir != null) {
+                    rc.move(newDir);
+                }
+            }
+            else if (rc.isCoreReady()) {
+                if (rc.getTeamOre() < 500) {
+                    //mine
+                    if (rc.senseOre(rc.getLocation()) > 0) {
+                        rc.mine();
+                    }
+                    else {
+                        Direction newDir = getMoveDir(this.theirHQ);
+
+                        if (newDir != null) {
+                            rc.move(newDir);
+                        }
+                    }
+                }
+            rc.yield();
+        }
+    }}
 
     public static class Tower extends BaseBot {
         public Tower(RobotController rc) {
@@ -262,6 +333,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
+        	transferSupplies();
             rc.yield();
         }
     }
